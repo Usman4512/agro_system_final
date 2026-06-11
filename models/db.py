@@ -1,18 +1,19 @@
-import os
 import MySQLdb
 from MySQLdb.cursors import DictCursor
-from flask import g, current_app
+from flask import current_app, g
 import click
 from flask.cli import with_appcontext
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
-# =========================
-# DATABASE CORE
-# =========================
+TRIAL_DAYS = 30
+DEFAULT_ADMIN_PASSWORD = "Usman$5000"
 
+
+# ================= DATABASE CLASS =================
 class Database:
     def __init__(self, app=None):
+        self.app = app
         if app:
             self.init_app(app)
 
@@ -20,88 +21,46 @@ class Database:
         app.teardown_appcontext(self.close_db)
 
     def get_connection(self):
-        if 'db' not in g:
-            g.db = MySQLdb.connect(
-                host=os.getenv("MYSQL_HOST"),
-                user=os.getenv("MYSQL_USER"),
-                password=os.getenv("MYSQL_PASSWORD"),
-                database=os.getenv("MYSQL_DB"),
-                port=int(os.getenv("MYSQL_PORT", 3306)),
-                cursorclass=DictCursor,
-                charset="utf8mb4"
-            )
+        if "db" not in g:
+            host = current_app.config["MYSQL_HOST"]
+
+            # Cloud / Unix socket
+            if host and host.startswith("/"):
+                g.db = MySQLdb.connect(
+                    unix_socket=host,
+                    user=current_app.config["MYSQL_USER"],
+                    password=current_app.config["MYSQL_PASSWORD"],
+                    database=current_app.config["MYSQL_DB"],
+                    cursorclass=DictCursor,
+                    charset="utf8mb4"
+                )
+            else:
+                g.db = MySQLdb.connect(
+                    host=host,
+                    user=current_app.config["MYSQL_USER"],
+                    password=current_app.config["MYSQL_PASSWORD"],
+                    database=current_app.config["MYSQL_DB"],
+                    port=int(current_app.get("MYSQL_PORT", 3306)) if hasattr(current_app, "get") else 3306,
+                    cursorclass=DictCursor,
+                    charset="utf8mb4"
+                )
+
         return g.db
 
     def close_db(self, e=None):
-        db = g.pop('db', None)
+        db = g.pop("db", None)
         if db:
             db.close()
 
 
 db = Database()
 
-# =========================
-# INIT APP
-# =========================
-
-def init_app(app):
-    db.init_app(app)
-    app.cli.add_command(init_db_command)
 
 def get_db():
     return db.get_connection()
 
-# =========================
-# INIT DATABASE TABLES
-# =========================
 
-def init_db():
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            full_name VARCHAR(100),
-            username VARCHAR(50) UNIQUE,
-            email VARCHAR(100) UNIQUE,
-            password_hash VARCHAR(255),
-            role VARCHAR(20) DEFAULT 'farmer',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    conn.commit()
-    cur.close()
-
-# =========================
-# CLI COMMAND
-# =========================
-
-@click.command('init-db')
-@with_appcontext
-def init_db_command():
-    init_db()
-    click.echo("Database initialized successfully!")
-
-# =========================
-# AUTO INIT CHECK
-# =========================
-
-def ensure_db_initialized():
-    conn = get_db()
-    cur = conn.cursor()
-    try:
-        cur.execute("SHOW TABLES LIKE 'users'")
-        if not cur.fetchone():
-            init_db()
-    finally:
-        cur.close()
-
-# =========================
-# REQUIRED USER FUNCTIONS
-# =========================
-
+# ================= USER FUNCTIONS (FIXED) =================
 def get_user_by_email(email):
     conn = get_db()
     cur = conn.cursor()
@@ -128,20 +87,91 @@ def get_user_by_id(user_id):
     cur.close()
     return user
 
-# =========================
-# OPTIONAL HELPERS
-# =========================
 
-def create_user(full_name, username, email, password):
+def get_user_by_token(token):
     conn = get_db()
     cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE verification_token=%s", (token,))
+    user = cur.fetchone()
+    cur.close()
+    return user
 
-    password_hash = generate_password_hash(password)
+
+def verify_user_email(token):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE users
+        SET is_verified=1, verification_token=NULL, token_expires=NULL
+        WHERE verification_token=%s AND token_expires > NOW()
+    """, (token,))
+    conn.commit()
+    rows = cur.rowcount
+    cur.close()
+    return rows > 0
+
+
+# ================= LOGGING =================
+def log_activity(user_id, activity_type, description,
+                 related_table=None, related_id=None, ip_address=None):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO activity_log
+        (user_id, activity_type, description, related_table, related_id, ip_address)
+        VALUES (%s,%s,%s,%s,%s,%s)
+    """, (user_id, activity_type, description, related_table, related_id, ip_address))
+    conn.commit()
+    cur.close()
+
+
+def create_notification(user_id, title, message, notification_type="info"):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO notifications (user_id, title, message, notification_type)
+        VALUES (%s,%s,%s,%s)
+    """, (user_id, title, message, notification_type))
+    conn.commit()
+    cur.close()
+
+
+# ================= SUBSCRIPTION =================
+def check_subscription(user):
+    if user["role"] == "admin":
+        return True, "admin"
+
+    status = user.get("subscription_status", "trial")
+
+    if status == "active":
+        if user.get("subscription_expiry") and user["subscription_expiry"] >= datetime.now().date():
+            return True, "active"
+        return False, "expired"
+
+    if status == "trial":
+        created = user.get("trial_started_at") or user.get("created_at")
+        if isinstance(created, str):
+            created = datetime.strptime(created[:19], "%Y-%m-%d %H:%M:%S")
+
+        if (datetime.now() - created).days <= TRIAL_DAYS:
+            return True, "trial"
+        return False, "expired"
+
+    return False, "expired"
+
+
+def activate_subscription(user_id, plan, months=1):
+    conn = get_db()
+    cur = conn.cursor()
+    expiry = (datetime.now() + timedelta(days=30 * months)).date()
 
     cur.execute("""
-        INSERT INTO users (full_name, username, email, password_hash)
-        VALUES (%s, %s, %s, %s)
-    """, (full_name, username, email, password_hash))
+        UPDATE users
+        SET subscription_status='active',
+            subscription_plan=%s,
+            subscription_expiry=%s
+        WHERE id=%s
+    """, (plan, expiry, user_id))
 
     conn.commit()
     cur.close()
