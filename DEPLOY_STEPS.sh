@@ -64,19 +64,19 @@ gcloud run deploy agro-system \
   --platform managed \
   --allow-unauthenticated \
   --add-cloudsql-instances agro-system-app:us-central1:agro-db \
-  --set-env-vars SECRET_KEY="any-long-random-text-here-agro2024" \
+  --set-env-vars SECRET_KEY="agro4512meri" \
   --set-env-vars MYSQL_HOST="/cloudsql/agro-system-app:us-central1:agro-db" \
-  --set-env-vars MYSQL_USER="agro_user" \
-  --set-env-vars MYSQL_PASSWORD="YourUserPassword456" \
+  --set-env-vars MYSQL_USER="root" \
+  --set-env-vars MYSQL_PASSWORD="Usman$5000" \
   --set-env-vars MYSQL_DB="agrosystem" \
   --set-env-vars MYSQL_PORT="3306" \
-  --set-env-vars MAIL_USERNAME="your-email@gmail.com" \
-  --set-env-vars MAIL_PASSWORD="your-16-char-gmail-app-password" \
-  --set-env-vars MAIL_DEFAULT_SENDER="Agro System <your-email@gmail.com>" \
-  --set-env-vars ADMIN_EMAIL="your-email@gmail.com" \
-  --set-env-vars JAZZCASH_NUMBER="03001234567" \
-  --set-env-vars EASYPAISA_NUMBER="03001234567" \
-  --set-env-vars OWNER_NAME="Your Full Name"
+  --set-env-vars MAIL_USERNAME="mu4512222@gmail.com" \
+  --set-env-vars MAIL_PASSWORD="keed pnby jutn qgno" \
+  --set-env-vars MAIL_DEFAULT_SENDER="Agro System <mu4512222@gmail.com>" \
+  --set-env-vars ADMIN_EMAIL="mu4512222@gmail.com" \
+  --set-env-vars JAZZCASH_NUMBER="03214512624" \
+  --set-env-vars EASYPAISA_NUMBER="03131631965" \
+  --set-env-vars OWNER_NAME="M Usman Manzoor"
 
 # After deploy you get a live URL like:
 # https://agro-system-xxxxxxxx-uc.a.run.app
