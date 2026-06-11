@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand">
+                <i class="fas fa-leaf"></i> AgroSystem
+            </a>
+        </div>
+        
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">
+                {{ session.full_name[0] if session.full_name else 'U' }}
+            </div>
+            <div class="sidebar-user-info">
+                <h5>{{ session.full_name }}</h5>
+                <span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item active">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item">
+                <i class="fas fa-seedling"></i> My Crops
+            </a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item">
+                <i class="fas fa-warehouse"></i> Inventory
+            </a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item">
+                <i class="fas fa-money-bill-wave"></i> Expenses
+            </a>
+            
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item">
+                <i class="fas fa-chart-line"></i> Market Rates
+            </a>
+            
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item">
+                <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="{{ url_for('dashboard.notifications') }}" class="nav-item">
+                <i class="fas fa-bell"></i> Notifications
+                {% if unread_count > 0 %}
+                <span class="nav-badge">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h4>Dashboard</h4>
+                <p>Welcome back, {{ session.full_name }}! Here's your farm overview.</p>
+            </div>
+            <div class="topbar-right">
+                <a href="{{ url_for('dashboard.notifications') }}" class="topbar-btn">
+                    <i class="fas fa-bell"></i>
+                    {% if unread_count > 0 %}
+                    <span class="badge">{{ unread_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('dashboard.profile') }}" class="topbar-btn">
+                    <i class="fas fa-user"></i>
+                </a>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card green animate-fade-in">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Crops</span>
+                        <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+                    </div>
+                    <div class="stat-value">{{ total_crops }}</div>
+                    <div class="stat-footer">
+                        <span class="positive"><i class="fas fa-arrow-up"></i> {{ active_crops }} active</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card orange animate-fade-in" style="animation-delay: 0.1s;">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Expenses</span>
+                        <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                    </div>
+                    <div class="stat-value pkr">{{ "{:,.0f}".format(total_expenses) }}</div>
+                    <div class="stat-footer">
+                        <span style="font-size: 12px; color: var(--gray);">All time expenses</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card blue animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="stat-header">
+                        <span class="stat-title">Total Revenue</span>
+                        <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    </div>
+                    <div class="stat-value pkr">{{ "{:,.0f}".format(total_revenue) }}</div>
+                    <div class="stat-footer">
+                        <span style="font-size: 12px; color: var(--gray);">From harvested crops</span>
+                    </div>
+                </div>
+                
+                <div class="stat-card {{ 'green' if profit >= 0 else 'orange' }} animate-fade-in" style="animation-delay: 0.3s;">
+                    <div class="stat-header">
+                        <span class="stat-title">Net Profit</span>
+                        <div class="stat-icon"><i class="fas fa-chart-pie"></i></div>
+                    </div>
+                    <div class="stat-value pkr">{{ "{:,.0f}".format(profit) }}</div>
+                    <div class="stat-footer">
+                        <span class="{{ 'positive' if profit >= 0 else 'neutral' }}">
+                            <i class="fas fa-{{ 'arrow-up' if profit >= 0 else 'arrow-down' }}"></i>
+                            {{ "{:.1f}".format((profit/total_revenue*100) if total_revenue > 0 else 0) }}%
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card teal animate-fade-in" style="animation-delay: 0.4s;">
+                    <div class="stat-header">
+                        <span class="stat-title">Inventory Items</span>
+                        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+                    </div>
+                    <div class="stat-value">{{ inventory_count }}</div>
+                    <div class="stat-footer">
+                        <span style="font-size: 12px; color: var(--gray);">Tracked inventory items</span>
+                    </div>
+                </div>
+                <div class="stat-card yellow animate-fade-in" style="animation-delay: 0.5s;">
+                    <div class="stat-header">
+                        <span class="stat-title">Upcoming Harvests</span>
+                        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                    </div>
+                    <div class="stat-value">{{ upcoming_harvests }}</div>
+                    <div class="stat-footer">
+                        <span style="font-size: 12px; color: var(--gray);">Next 14 days</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid-2">
+                <!-- Recent Crops -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-seedling" style="color: var(--primary); margin-right: 8px;"></i>Recent Crops</h5>
+                        <a href="{{ url_for('crops.index') }}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_crops %}
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Crop</th>
+                                        <th>Area</th>
+                                        <th>Status</th>
+                                        <th>Expenses</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for crop in recent_crops %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ crop.crop_name }}</strong>
+                                            <br><small style="color: var(--gray);">{{ crop.variety }}</small>
+                                        </td>
+                                        <td>{{ crop.area_acres }} acres</td>
+                                        <td><span class="badge badge-{{ 'success' if crop.status == 'harvested' else 'info' if crop.status == 'growing' else 'warning' }}">{{ crop.status|replace('_', ' ')|title }}</span></td>
+                                        <td class="pkr">{{ "{:,.0f}".format(crop.expenses_pkr or 0) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-seedling"></i></div>
+                            <h4>No crops yet</h4>
+                            <p>Add your first crop to start tracking</p>
+                            <a href="{{ url_for('crops.add') }}" class="btn btn-primary" style="margin-top: 15px;">
+                                <i class="fas fa-plus"></i> Add Crop
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Recent Expenses -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-money-bill-wave" style="color: var(--secondary); margin-right: 8px;"></i>Recent Expenses</h5>
+                        <a href="{{ url_for('crops.expenses') }}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_expenses %}
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exp in recent_expenses %}
+                                    <tr>
+                                        <td><span class="badge badge-primary">{{ exp.expense_category|title }}</span></td>
+                                        <td>{{ exp.description[:30] }}{% if exp.description|length > 30 %}...{% endif %}</td>
+                                        <td class="pkr">{{ "{:,.0f}".format(exp.amount_pkr) }}</td>
+                                        <td>{{ exp.expense_date.strftime('%d %b') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fas fa-wallet"></i></div>
+                            <h4>No expenses yet</h4>
+                            <p>Track your farm expenses here</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notifications -->
+            {% if notifications %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-bell" style="color: var(--info); margin-right: 8px;"></i>Recent Notifications</h5>
+                    <a href="{{ url_for('dashboard.notifications') }}" class="btn btn-sm btn-secondary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% for notif in notifications[:3] %}
+                    <div style="display: flex; align-items: start; gap: 15px; padding: 12px; border-radius: 12px; margin-bottom: 8px; background: {{ '#e8f5e9' if notif.notification_type == 'success' else '#fff3e0' if notif.notification_type == 'warning' else '#e3f2fd' }};">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{ '#c8e6c9' if notif.notification_type == 'success' else '#ffe0b2' if notif.notification_type == 'warning' else '#bbdefb' }}; color: {{ '#2e7d32' if notif.notification_type == 'success' else '#e65100' if notif.notification_type == 'warning' else '#1565c0' }};">
+                            <i class="fas fa-{{ 'check' if notif.notification_type == 'success' else 'exclamation' if notif.notification_type == 'warning' else 'info' }}"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h6 style="font-size: 14px; font-weight: 600; margin-bottom: 3px;">{{ notif.title }}</h6>
+                            <p style="font-size: 13px; color: var(--gray); margin: 0;">{{ notif.message }}</p>
+                        </div>
+                        <small style="color: var(--gray); font-size: 11px;">{{ notif.created_at.strftime('%d %b') }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-bolt" style="color: var(--warning); margin-right: 8px;"></i>Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                        <a href="{{ url_for('crops.add') }}" class="btn btn-success" style="flex-direction: column; padding: 25px; gap: 10px;">
+                            <i class="fas fa-plus-circle" style="font-size: 24px;"></i>
+                            <span>Add New Crop</span>
+                        </a>
+                        <a href="{{ url_for('rates.index') }}" class="btn btn-info" style="flex-direction: column; padding: 25px; gap: 10px;">
+                            <i class="fas fa-chart-bar" style="font-size: 24px;"></i>
+                            <span>Check Rates</span>
+                        </a>
+                        <a href="{{ url_for('crops.inventory') }}" class="btn btn-warning" style="flex-direction: column; padding: 25px; gap: 10px; color: white;">
+                            <i class="fas fa-boxes" style="font-size: 24px;"></i>
+                            <span>Inventory</span>
+                        </a>
+                        <a href="{{ url_for('crops.expenses') }}" class="btn btn-primary" style="flex-direction: column; padding: 25px; gap: 10px;">
+                            <i class="fas fa-calculator" style="font-size: 24px;"></i>
+                            <span>Add Expense</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

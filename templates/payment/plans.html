@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Subscribe - Agro System{% endblock %}
+{% block body %}
+<div style="min-height:100vh;background:#f0f4f8;padding:40px 20px">
+
+  <div style="max-width:900px;margin:0 auto">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:40px">
+      <h1 style="font-size:28px;color:#1a7a4a;margin:0 0 8px"><i class="fas fa-leaf"></i> Agro System</h1>
+      <h2 style="font-size:22px;color:#333;margin:0 0 8px">Choose Your Plan</h2>
+      <p style="color:#666;font-size:15px">30 days free trial included with every new account</p>
+    </div>
+
+    <!-- Trial notice -->
+    {% if session.get('trial_days_left') %}
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px 20px;margin-bottom:30px;text-align:center">
+      <i class="fas fa-clock" style="color:#e67e00"></i>
+      <strong style="color:#856404"> {{ session.trial_days_left }} days left in your free trial.</strong>
+      Subscribe now to keep your data and continue using all features.
+    </div>
+    {% endif %}
+
+    <!-- Plans grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:40px">
+
+      {% for plan_id, plan in plans.items() %}
+      <div style="background:#fff;border-radius:14px;border:2px solid {% if plan_id=='standard' %}#1a7a4a{% else %}#e0e0e0{% endif %};padding:30px 24px;position:relative">
+
+        {% if plan_id == 'standard' %}
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#1a7a4a;color:#fff;font-size:12px;font-weight:600;padding:4px 16px;border-radius:20px">
+          MOST POPULAR
+        </div>
+        {% endif %}
+
+        <h3 style="font-size:20px;color:#1a7a4a;margin:0 0 6px">{{ plan.name }}</h3>
+        <div style="font-size:32px;font-weight:700;color:#333;margin:10px 0">
+          Rs. {{ plan.price }}
+          <span style="font-size:14px;font-weight:400;color:#888">/month</span>
+        </div>
+
+        <ul style="list-style:none;padding:0;margin:16px 0 24px">
+          {% for f in plan.features %}
+          <li style="padding:6px 0;font-size:14px;color:#444;border-bottom:1px solid #f0f0f0">
+            <i class="fas fa-check" style="color:#1a7a4a;margin-right:8px"></i>{{ f }}
+          </li>
+          {% endfor %}
+        </ul>
+
+        <a href="{{ url_for('payment.submit', plan=plan_id) }}"
+           style="display:block;text-align:center;background:{% if plan_id=='standard' %}#1a7a4a{% else %}#fff{% endif %};
+                  color:{% if plan_id=='standard' %}#fff{% else %}#1a7a4a{% endif %};
+                  border:2px solid #1a7a4a;border-radius:8px;padding:12px;font-weight:600;text-decoration:none;font-size:15px">
+          Subscribe — Rs. {{ plan.price }}
+        </a>
+      </div>
+      {% endfor %}
+
+    </div>
+
+    <!-- Payment info box -->
+    <div style="background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:28px;text-align:center">
+      <h3 style="color:#333;margin:0 0 16px;font-size:18px"><i class="fas fa-mobile-alt" style="color:#1a7a4a"></i> How to Pay</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:500px;margin:0 auto">
+        <div style="background:#f8f9fa;border-radius:10px;padding:16px">
+          <div style="font-size:13px;color:#888;margin-bottom:4px">JazzCash</div>
+          <div style="font-size:20px;font-weight:700;color:#333">{{ jazzcash }}</div>
+          <div style="font-size:12px;color:#666;margin-top:4px">{{ owner }}</div>
+        </div>
+        <div style="background:#f8f9fa;border-radius:10px;padding:16px">
+          <div style="font-size:13px;color:#888;margin-bottom:4px">Easypaisa</div>
+          <div style="font-size:20px;font-weight:700;color:#333">{{ easypaisa }}</div>
+          <div style="font-size:12px;color:#666;margin-top:4px">{{ owner }}</div>
+        </div>
+      </div>
+      <p style="color:#666;font-size:13px;margin:16px 0 0">
+        Send payment → then click Subscribe → enter transaction ID → account activated within 24 hours
+      </p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

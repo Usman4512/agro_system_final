@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ farmer.full_name }} - Admin Panel{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item active"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-user" style="color: var(--primary);"></i> {{ farmer.full_name }}</h4></div>
+            <div class="topbar-right">
+                <a href="{{ url_for('admin.farmers') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="profile-header">
+                <div class="profile-avatar">{{ farmer.full_name[0] }}</div>
+                <h3>{{ farmer.full_name }}</h3>
+                <p>@{{ farmer.username }} &middot; {{ farmer.email }} &middot; {{ farmer.city }}, {{ farmer.province }}</p>
+                <span class="badge badge-{{ 'success' if farmer.status == 'active' else 'danger' }}" style="margin-top: 10px;">{{ farmer.status|title }}</span>
+            </div>
+            
+            <div class="stats-grid" style="margin-bottom: 25px;">
+                <div class="stat-card green"><div class="stat-header"><span class="stat-title">Total Crops</span><div class="stat-icon"><i class="fas fa-seedling"></i></div></div><div class="stat-value">{{ total_crops }}</div></div>
+                <div class="stat-card orange"><div class="stat-header"><span class="stat-title">Total Expenses</span><div class="stat-icon"><i class="fas fa-wallet"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_expenses) }}</div></div>
+                <div class="stat-card blue"><div class="stat-header"><span class="stat-title">Total Revenue</span><div class="stat-icon"><i class="fas fa-coins"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_revenue) }}</div></div>
+                <div class="stat-card purple"><div class="stat-header"><span class="stat-title">Net Profit</span><div class="stat-icon"><i class="fas fa-chart-pie"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_revenue - total_expenses) }}</div></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header"><h5 class="card-title">Farmer's Crops</h5></div>
+                <div class="card-body">
+                    {% if crops %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead><tr><th>Crop</th><th>Type</th><th>Season</th><th>Area</th><th>Status</th><th>Expenses</th><th>Revenue</th></tr></thead>
+                            <tbody>
+                                {% for crop in crops %}
+                                <tr>
+                                    <td><strong>{{ crop.crop_name }}</strong>{% if crop.variety %}<br><small>{{ crop.variety }}</small>{% endif %}</td>
+                                    <td>{{ crop.crop_type|replace('_', ' ')|title }}</td>
+                                    <td>{{ crop.season|title }}</td>
+                                    <td>{{ crop.area_acres }} ac</td>
+                                    <td><span class="badge badge-{{ 'success' if crop.status == 'harvested' else 'info' if crop.status in ['growing', 'planted'] else 'warning' }}">{{ crop.status|replace('_', ' ')|title }}</span></td>
+                                    <td class="pkr">{{ "{:,.0f}".format(crop.expenses_pkr or 0) }}</td>
+                                    <td class="pkr">{{ "{:,.0f}".format(crop.revenue_pkr or 0) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state"><div class="empty-state-icon"><i class="fas fa-seedling"></i></div><h4>No crops registered</h4></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

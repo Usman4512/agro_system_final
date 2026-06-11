@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Add Crop - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item active"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-plus-circle" style="color: var(--primary);"></i> Add New Crop</h4><p>Register a new crop to your farm</p></div>
+        </div>
+        
+        <div class="content-area">
+            <div class="card" style="max-width: 800px;">
+                <div class="card-header"><h5 class="card-title">Crop Information</h5></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('crops.add') }}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Crop Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" name="crop_name" placeholder="e.g. Wheat, Rice, Cotton" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Crop Type</label>
+                                <select class="form-control" name="crop_type">
+                                    <option value="food_crop">Food Crop</option>
+                                    <option value="cash_crop">Cash Crop</option>
+                                    <option value="vegetable">Vegetable</option>
+                                    <option value="fruit">Fruit</option>
+                                    <option value="livestock">Livestock</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Variety</label>
+                                <input type="text" class="form-control" name="variety" placeholder="e.g. Desi, Basmati, Hybrid">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Season <span class="required">*</span></label>
+                                <select class="form-control" name="season" required>
+                                    <option value="">Select Season</option>
+                                    <option value="rabi">Rabi (Winter)</option>
+                                    <option value="kharif">Kharif (Summer)</option>
+                                    <option value="zaid">Zaid (Short)</option>
+                                    <option value="year_round">Year Round</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Area (Acres) <span class="required">*</span></label>
+                                <input type="number" class="form-control" name="area_acres" placeholder="e.g. 5.5" step="0.01" min="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Planting Date</label>
+                                <input type="date" class="form-control" name="planting_date">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Expected Harvest</label>
+                                <input type="date" class="form-control" name="expected_harvest_date">
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Expected Yield (kg)</label>
+                                <input type="number" class="form-control" name="yield_expected_kg" placeholder="Estimated yield in kg" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Initial Expenses (Rs.)</label>
+                                <input type="number" class="form-control" name="expenses_pkr" placeholder="Seed, fertilizer costs" step="0.01" min="0">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3" placeholder="Any additional notes about this crop..."></textarea>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <a href="{{ url_for('crops.index') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Crop</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

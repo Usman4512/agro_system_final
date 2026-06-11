@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item active"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-money-bill-wave" style="color: var(--secondary);"></i> Expenses</h4><p>Track all your farm expenses</p></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Total Expenses Card -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 25px;">
+                <div class="stat-card red">
+                    <div class="stat-header"><span class="stat-title">Total Expenses</span><div class="stat-icon"><i class="fas fa-wallet"></i></div></div>
+                    <div class="stat-value pkr">{{ "{:,.0f}".format(total_expenses) }}</div>
+                </div>
+                {% for cat in category_totals %}
+                <div class="stat-card {{ 'orange' if cat.expense_category == 'labor' else 'blue' if cat.expense_category == 'irrigation' else 'purple' if cat.expense_category == 'equipment' else 'green' }}">
+                    <div class="stat-header"><span class="stat-title" style="font-size: 11px;">{{ cat.expense_category|title }}</span><div class="stat-icon"><i class="fas fa-tag"></i></div></div>
+                    <div class="stat-value" style="font-size: 22px;">Rs. {{ "{:,.0f}".format(cat.total) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="grid-2">
+                <!-- Add Expense Form -->
+                <div class="card">
+                    <div class="card-header"><h5 class="card-title"><i class="fas fa-plus" style="color: var(--success);"></i> Add Expense</h5></div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('crops.add_expense') }}">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Category <span class="required">*</span></label>
+                                    <select class="form-control" name="expense_category" required>
+                                        <option value="">Select</option>
+                                        <option value="seeds">Seeds</option>
+                                        <option value="fertilizer">Fertilizer</option>
+                                        <option value="pesticide">Pesticide</option>
+                                        <option value="labor">Labor</option>
+                                        <option value="irrigation">Irrigation</option>
+                                        <option value="fuel">Fuel</option>
+                                        <option value="equipment">Equipment</option>
+                                        <option value="transport">Transport</option>
+                                        <option value="storage">Storage</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Amount (Rs.) <span class="required">*</span></label>
+                                    <input type="number" class="form-control" name="amount_pkr" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description <span class="required">*</span></label>
+                                <textarea class="form-control" name="description" rows="2" placeholder="What was this expense for?" required></textarea>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-control" name="expense_date" value="{{ request.args.get('date', '') }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Payment Method</label>
+                                    <select class="form-control" name="payment_method">
+                                        <option value="cash">Cash</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="credit">Credit</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Receipt #</label>
+                                <input type="text" class="form-control" name="receipt_number" placeholder="Optional receipt number">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block"><i class="fas fa-save"></i> Record Expense</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Expenses List -->
+                <div class="card">
+                    <div class="card-header"><h5 class="card-title"><i class="fas fa-list" style="color: var(--info);"></i> Recent Expenses</h5></div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        {% if expenses %}
+                        {% for exp in expenses %}
+                        <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <h6 style="font-size: 14px; font-weight: 600;">{{ exp.description[:40] }}{% if exp.description|length > 40 %}...{% endif %}</h6>
+                                    <span class="badge badge-primary" style="font-size: 11px;">{{ exp.expense_category|title }}</span>
+                                    <span style="font-size: 12px; color: var(--gray); margin-left: 8px;">{{ exp.expense_date.strftime('%d %b %Y') if exp.expense_date else '' }}</span>
+                                </div>
+                                <div style="font-weight: 700; color: var(--danger);">Rs. {{ "{:,.0f}".format(exp.amount_pkr) }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-state" style="padding: 40px 20px;">
+                            <div class="empty-state-icon" style="font-size: 48px;"><i class="fas fa-receipt"></i></div>
+                            <h4 style="font-size: 16px;">No expenses yet</h4>
+                            <p style="font-size: 13px;">Record your first farm expense</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

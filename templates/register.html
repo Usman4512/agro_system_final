@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+    <div class="auth-container" style="max-width: 1000px;">
+        <div class="auth-left">
+            <div class="logo"><i class="fas fa-leaf"></i> AgroSystem</div>
+            <h2>Start Your Smart Farming Journey!</h2>
+            <p>Join thousands of farmers using AgroSystem to manage their farms efficiently. Get access to market rates, crop analytics, and much more.</p>
+            <ul class="auth-features">
+                <li><i class="fas fa-check"></i> Free account registration</li>
+                <li><i class="fas fa-check"></i> Secure email verification</li>
+                <li><i class="fas fa-check"></i> Complete farm management</li>
+                <li><i class="fas fa-check"></i> PKR market rates daily</li>
+            </ul>
+        </div>
+        <div class="auth-right" style="padding: 35px 35px;">
+            <div class="auth-header">
+                <h3>Create Your Account</h3>
+                <p>Fill in the details to get started</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('auth.register') }}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" class="form-control" name="full_name" placeholder="Your full name" value="{{ form_data.full_name if form_data else '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Username <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-at input-icon"></i>
+                            <input type="text" class="form-control" name="username" placeholder="Choose a username" value="{{ form_data.username if form_data else '' }}" required minlength="4">
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" class="form-control" name="email" placeholder="your@email.com" value="{{ form_data.email if form_data else '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Phone <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-phone input-icon"></i>
+                            <input type="tel" class="form-control" name="phone" placeholder="03XX-XXXXXXX" value="{{ form_data.phone if form_data else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Password <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control" name="password" placeholder="Min. 6 characters" required minlength="6">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" class="form-control" name="confirm_password" placeholder="Repeat password" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">City <span class="required">*</span></label>
+                        <div class="input-group">
+                            <i class="fas fa-map-marker-alt input-icon"></i>
+                            <input type="text" class="form-control" name="city" placeholder="Your city" value="{{ form_data.city if form_data else '' }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Province <span class="required">*</span></label>
+                        <select class="form-control" name="province" required>
+                            <option value="">Select Province</option>
+                            <option value="Punjab" {{ 'selected' if form_data and form_data.province == 'Punjab' else '' }}>Punjab</option>
+                            <option value="Sindh" {{ 'selected' if form_data and form_data.province == 'Sindh' else '' }}>Sindh</option>
+                            <option value="KPK" {{ 'selected' if form_data and form_data.province == 'KPK' else '' }}>Khyber Pakhtunkhwa</option>
+                            <option value="Balochistan" {{ 'selected' if form_data and form_data.province == 'Balochistan' else '' }}>Balochistan</option>
+                            <option value="Gilgit-Baltistan" {{ 'selected' if form_data and form_data.province == 'Gilgit-Baltistan' else '' }}>Gilgit-Baltistan</option>
+                            <option value="AJK" {{ 'selected' if form_data and form_data.province == 'AJK' else '' }}>Azad Kashmir</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label class="form-label">Farm Size (Acres)</label>
+                        <div class="input-group">
+                            <i class="fas fa-ruler-combined input-icon"></i>
+                            <input type="number" class="form-control" name="farm_size" placeholder="e.g. 10" value="{{ form_data.farm_size if form_data else '' }}" step="0.01" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Farm Type</label>
+                        <select class="form-control" name="farm_type">
+                            <option value="">Select Type</option>
+                            <option value="crop_farm" {{ 'selected' if form_data and form_data.farm_type == 'crop_farm' else '' }}>Crop Farm</option>
+                            <option value="livestock" {{ 'selected' if form_data and form_data.farm_type == 'livestock' else '' }}>Livestock</option>
+                            <option value="mixed" {{ 'selected' if form_data and form_data.farm_type == 'mixed' else '' }}>Mixed Farming</option>
+                            <option value="organic" {{ 'selected' if form_data and form_data.farm_type == 'organic' else '' }}>Organic Farm</option>
+                            <option value="dairy" {{ 'selected' if form_data and form_data.farm_type == 'dairy' else '' }}>Dairy Farm</option>
+                            <option value="poultry" {{ 'selected' if form_data and form_data.farm_type == 'poultry' else '' }}>Poultry Farm</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 10px;">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}My Crops - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item active"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4>My Crops</h4><p>Manage all your crops in one place</p></div>
+            <div class="topbar-right">
+                <a href="{{ url_for('crops.add') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Crop</a>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Status Summary -->
+            <div style="display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap;">
+                <div style="background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <span style="font-size: 13px; color: var(--gray);">Planned</span>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--info);">{{ status_counts.get('planned', 0) }}</div>
+                </div>
+                <div style="background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <span style="font-size: 13px; color: var(--gray);">Planted</span>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--primary);">{{ status_counts.get('planted', 0) }}</div>
+                </div>
+                <div style="background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <span style="font-size: 13px; color: var(--gray);">Growing</span>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--warning);">{{ status_counts.get('growing', 0) }}</div>
+                </div>
+                <div style="background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                    <span style="font-size: 13px; color: var(--gray);">Harvested</span>
+                    <div style="font-size: 24px; font-weight: 700; color: var(--success);">{{ status_counts.get('harvested', 0) }}</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <form class="filter-bar" method="get">
+                <div class="filter-group">
+                    <label>Search</label>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" name="search" placeholder="Search crops..." value="{{ filters.search }}">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select class="form-control" name="status">
+                        <option value="">All Status</option>
+                        <option value="planned" {{ 'selected' if filters.status == 'planned' else '' }}>Planned</option>
+                        <option value="planted" {{ 'selected' if filters.status == 'planted' else '' }}>Planted</option>
+                        <option value="growing" {{ 'selected' if filters.status == 'growing' else '' }}>Growing</option>
+                        <option value="ready_to_harvest" {{ 'selected' if filters.status == 'ready_to_harvest' else '' }}>Ready to Harvest</option>
+                        <option value="harvested" {{ 'selected' if filters.status == 'harvested' else '' }}>Harvested</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Season</label>
+                    <select class="form-control" name="season">
+                        <option value="">All Seasons</option>
+                        <option value="rabi" {{ 'selected' if filters.season == 'rabi' else '' }}>Rabi</option>
+                        <option value="kharif" {{ 'selected' if filters.season == 'kharif' else '' }}>Kharif</option>
+                        <option value="zaid" {{ 'selected' if filters.season == 'zaid' else '' }}>Zaid</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="height: fit-content;"><i class="fas fa-filter"></i> Filter</button>
+                <a href="{{ url_for('crops.index') }}" class="btn btn-secondary btn-sm" style="height: fit-content;"><i class="fas fa-undo"></i> Reset</a>
+            </form>
+            
+            <!-- Crops Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">All Crops</h5>
+                    <span style="font-size: 13px; color: var(--gray);">{{ crops|length }} total</span>
+                </div>
+                <div class="card-body">
+                    {% if crops %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Crop</th>
+                                    <th>Type</th>
+                                    <th>Season</th>
+                                    <th>Area</th>
+                                    <th>Status</th>
+                                    <th>Expenses (Rs.)</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for crop in crops %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ crop.crop_name }}</strong>
+                                        {% if crop.variety %}<br><small style="color: var(--gray);">{{ crop.variety }}</small>{% endif %}
+                                    </td>
+                                    <td>{{ crop.crop_type|replace('_', ' ')|title }}</td>
+                                    <td>{{ crop.season|title }}</td>
+                                    <td>{{ crop.area_acres }} ac</td>
+                                    <td>
+                                        <span class="badge badge-{{ 'success' if crop.status == 'harvested' else 'info' if crop.status in ['growing', 'planted'] else 'warning' if crop.status == 'ready_to_harvest' else 'secondary' }}">
+                                            {{ crop.status|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td class="pkr">{{ "{:,.0f}".format(crop.expenses_pkr or 0) }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px;">
+                                            <a href="{{ url_for('crops.view', crop_id=crop.id) }}" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
+                                            <a href="{{ url_for('crops.edit', crop_id=crop.id) }}" class="btn btn-sm btn-warning" title="Edit" style="color: white;"><i class="fas fa-edit"></i></a>
+                                            <form method="post" action="{{ url_for('crops.delete', crop_id=crop.id) }}" style="display: inline;" onsubmit="return confirm('Delete this crop?');">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-seedling"></i></div>
+                        <h4>No crops found</h4>
+                        <p>Add your first crop or adjust your filters</p>
+                        <a href="{{ url_for('crops.add') }}" class="btn btn-primary" style="margin-top: 15px;"><i class="fas fa-plus"></i> Add Crop</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

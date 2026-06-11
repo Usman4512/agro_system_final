@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="logo"><i class="fas fa-leaf"></i> AgroSystem</div>
+            <h2>Welcome Back, Farmer!</h2>
+            <p>Access your complete agriculture management dashboard. Track crops, monitor market rates, manage inventory, and grow your farm business smarter.</p>
+            <ul class="auth-features">
+                <li><i class="fas fa-check"></i> Track crops from planting to harvest</li>
+                <li><i class="fas fa-check"></i> Real-time market rates in PKR</li>
+                <li><i class="fas fa-check"></i> Manage farm inventory & expenses</li>
+                <li><i class="fas fa-check"></i> Analytics & profit tracking</li>
+            </ul>
+        </div>
+        <div class="auth-right">
+            <div class="auth-header">
+                <h3>Login to Your Account</h3>
+                <p>Enter your credentials to access your dashboard</p>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="form-group">
+                    <label class="form-label">Username or Email</label>
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control" name="username" placeholder="Enter username or email" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" class="form-control" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label class="form-check">
+                            <input type="checkbox" class="form-check-input" name="remember" value="1">
+                            <span class="form-check-label">Remember me</span>
+                        </label>
+                        <a href="{{ url_for('auth.forgot_password') }}" style="font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none;">Forgot Password?</a>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Email - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+    <div class="auth-container" style="max-width: 600px; grid-template-columns: 1fr;">
+        <div class="auth-right">
+            <div class="verify-container">
+                <div class="verify-icon email">
+                    <i class="fas fa-envelope-open-text"></i>
+                </div>
+                <h3>Verify Your Email</h3>
+                <p>We've sent a verification email to <strong>{{ email }}</strong>. Please check your inbox and click the verification link to activate your account.</p>
+                
+                <div style="background: var(--info-light); padding: 20px; border-radius: 12px; margin: 25px 0;">
+                    <i class="fas fa-info-circle" style="color: var(--info); margin-right: 8px;"></i>
+                    <span style="font-size: 13px; color: #1565c0;">The verification link will expire in 24 hours.</span>
+                </div>
+                
+                <a href="{{ url_for('auth.resend_verification') }}" class="btn btn-primary">
+                    <i class="fas fa-redo"></i> Resend Email
+                </a>
+                
+                <div class="auth-footer" style="margin-top: 30px;">
+                    <a href="{{ url_for('auth.login') }}"><i class="fas fa-arrow-left"></i> Back to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

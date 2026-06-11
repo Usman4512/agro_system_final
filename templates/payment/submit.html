@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Submit Payment - Agro System{% endblock %}
+{% block body %}
+<div style="min-height:100vh;background:#f0f4f8;padding:40px 20px">
+<div style="max-width:560px;margin:0 auto">
+
+  <div style="text-align:center;margin-bottom:30px">
+    <h2 style="color:#1a7a4a;margin:0 0 6px"><i class="fas fa-leaf"></i> Agro System</h2>
+    <p style="color:#666;margin:0">Submit Payment for {{ plan_info.name }} Plan</p>
+  </div>
+
+  <!-- Step 1: Send money -->
+  <div style="background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:24px;margin-bottom:20px">
+    <h3 style="color:#333;margin:0 0 16px;font-size:16px">
+      <span style="background:#1a7a4a;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;margin-right:8px">1</span>
+      Send Rs. {{ plan_info.price }} to any of these numbers
+    </h3>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#f8f9fa;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">JazzCash</div>
+        <div style="font-size:22px;font-weight:700;color:#333">{{ jazzcash }}</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">{{ owner }}</div>
+      </div>
+      <div style="background:#f8f9fa;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:12px;color:#888;margin-bottom:4px">Easypaisa</div>
+        <div style="font-size:22px;font-weight:700;color:#333">{{ easypaisa }}</div>
+        <div style="font-size:12px;color:#666;margin-top:2px">{{ owner }}</div>
+      </div>
+    </div>
+
+    <div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-top:14px;font-size:13px;color:#2e7d32">
+      <i class="fas fa-info-circle"></i>
+      Amount: <strong>Rs. {{ plan_info.price }}</strong> &nbsp;|&nbsp;
+      Plan: <strong>{{ plan_info.name }}</strong> &nbsp;|&nbsp;
+      Duration: <strong>1 Month</strong>
+    </div>
+  </div>
+
+  <!-- Step 2: Submit form -->
+  <div style="background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:24px">
+    <h3 style="color:#333;margin:0 0 16px;font-size:16px">
+      <span style="background:#1a7a4a;color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;margin-right:8px">2</span>
+      Enter Payment Details
+    </h3>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat, msg in messages %}
+        <div style="background:{% if cat=='danger' %}#fce4e4{% else %}#e8f5e9{% endif %};border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:{% if cat=='danger' %}#c62828{% else %}#2e7d32{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px">
+          Your JazzCash / Easypaisa Number
+        </label>
+        <input type="text" name="jazzcash_number" placeholder="e.g. 03001234567" required
+               style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+        <div style="font-size:12px;color:#888;margin-top:4px">The number you sent payment FROM</div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:13px;font-weight:600;color:#444;margin-bottom:6px">
+          Transaction ID
+        </label>
+        <input type="text" name="transaction_id" placeholder="e.g. TXN123456789" required
+               style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box">
+        <div style="font-size:12px;color:#888;margin-top:4px">
+          Found in your JazzCash/Easypaisa SMS after sending payment
+        </div>
+      </div>
+
+      <button type="submit"
+              style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:8px;padding:14px;font-size:15px;font-weight:600;cursor:pointer">
+        <i class="fas fa-paper-plane"></i> Submit Payment Request
+      </button>
+    </form>
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <a href="{{ url_for('payment.plans') }}" style="color:#888;font-size:13px;text-decoration:none">
+      ← Back to plans
+    </a>
+  </div>
+
+</div>
+</div>
+{% endblock %}

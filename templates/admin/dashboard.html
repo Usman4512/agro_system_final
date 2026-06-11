@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-tachometer-alt" style="color: var(--primary);"></i> Admin Dashboard</h4><p>System overview and analytics</p></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Admin Stats -->
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="stat-header"><span class="stat-title">Total Farmers</span><div class="stat-icon"><i class="fas fa-users"></i></div></div>
+                    <div class="stat-value">{{ total_farmers }}</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-header"><span class="stat-title">New (30 Days)</span><div class="stat-icon"><i class="fas fa-user-plus"></i></div></div>
+                    <div class="stat-value">{{ new_farmers }}</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-header"><span class="stat-title">Total Crops</span><div class="stat-icon"><i class="fas fa-seedling"></i></div></div>
+                    <div class="stat-value">{{ total_crops }}</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-header"><span class="stat-title">Active Rates</span><div class="stat-icon"><i class="fas fa-tags"></i></div></div>
+                    <div class="stat-value">{{ total_rates }}</div>
+                </div>
+                {% if pending_verifications > 0 %}
+                <div class="stat-card red">
+                    <div class="stat-header"><span class="stat-title">Pending Verifications</span><div class="stat-icon"><i class="fas fa-envelope"></i></div></div>
+                    <div class="stat-value">{{ pending_verifications }}</div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="grid-2">
+                <!-- Recent Farmers -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-users" style="color: var(--primary);"></i> Recent Farmers</h5>
+                        <a href="{{ url_for('admin.farmers') }}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead><tr><th>Name</th><th>City</th><th>Farm Size</th><th>Status</th><th>Joined</th></tr></thead>
+                                <tbody>
+                                    {% for farmer in recent_farmers %}
+                                    <tr>
+                                        <td><strong>{{ farmer.full_name }}</strong><br><small style="color: var(--gray);">{{ farmer.email }}</small></td>
+                                        <td>{{ farmer.city or '-' }}</td>
+                                        <td>{{ farmer.farm_size or 0 }} acres</td>
+                                        <td><span class="badge badge-{{ 'success' if farmer.status == 'active' else 'danger' if farmer.status == 'suspended' else 'secondary' }}">{{ farmer.status|title }}</span></td>
+                                        <td>{{ farmer.created_at.strftime('%d %b') if farmer.created_at else '' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activities -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-history" style="color: var(--info);"></i> Recent Activities</h5>
+                        <a href="{{ url_for('admin.activities') }}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% for activity in recent_activities %}
+                        <div style="display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-lighter); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 12px; flex-shrink: 0;">
+                                <i class="fas fa-{{ 'user' if 'login' in activity.activity_type or 'register' in activity.activity_type else 'seedling' if 'crop' in activity.activity_type else 'cog' }}"></i>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 13px; font-weight: 500;">{{ activity.description }}</div>
+                                <div style="font-size: 11px; color: var(--gray); margin-top: 2px;">
+                                    by {{ activity.full_name or 'System' }} &middot; {{ activity.created_at.strftime('%d %b %H:%M') if activity.created_at else '' }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Crop Distribution -->
+            {% if crop_distribution %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-chart-pie" style="color: var(--warning);"></i> Crop Distribution</h5></div>
+                <div class="card-body">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        {% for crop in crop_distribution %}
+                        <div style="flex: 1; min-width: 150px; background: var(--gray-light); padding: 20px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 32px; font-weight: 800; color: var(--primary);">{{ crop.count }}</div>
+                            <div style="font-size: 13px; color: var(--gray); text-transform: capitalize;">{{ crop.crop_type|replace('_', ' ') }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

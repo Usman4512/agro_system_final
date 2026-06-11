@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Farmers - Admin Panel{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item active"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-users" style="color: var(--primary);"></i> All Farmers</h4></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form class="filter-bar" method="get">
+                <div class="filter-group" style="flex: 2;">
+                    <label>Search</label>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" name="search" placeholder="Name, email, username, city..." value="{{ search }}">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select class="form-control" name="status">
+                        <option value="">All</option>
+                        <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Active</option>
+                        <option value="suspended" {{ 'selected' if status_filter == 'suspended' else '' }}>Suspended</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Verification</label>
+                    <select class="form-control" name="verification">
+                        <option value="">All</option>
+                        <option value="verified" {{ 'selected' if verification_filter == 'verified' else '' }}>Verified</option>
+                        <option value="unverified" {{ 'selected' if verification_filter == 'unverified' else '' }}>Unverified</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="height: fit-content;"><i class="fas fa-filter"></i></button>
+                <a href="{{ url_for('admin.farmers') }}" class="btn btn-secondary btn-sm" style="height: fit-content;"><i class="fas fa-undo"></i></a>
+            </form>
+            
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr><th>ID</th><th>Name</th><th>Contact</th><th>Location</th><th>Farm</th><th>Status</th><th>Joined</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for farmer in farmers %}
+                                <tr>
+                                    <td>#{{ farmer.id }}</td>
+                                    <td><strong>{{ farmer.full_name }}</strong><br><small style="color: var(--gray);">@{{ farmer.username }}</small></td>
+                                    <td>{{ farmer.email }}<br><small>{{ farmer.phone or '-' }}</small></td>
+                                    <td>{{ farmer.city or '-' }}<br><small>{{ farmer.province or '' }}</small></td>
+                                    <td>{{ farmer.farm_size or 0 }} ac<br><small>{{ farmer.farm_type|replace('_', ' ')|title if farmer.farm_type else '-' }}</small></td>
+                                    <td><span class="badge badge-{{ 'success' if farmer.status == 'active' else 'danger' }}">{{ farmer.status|title }}</span></td>
+                                    <td>{{ farmer.created_at.strftime('%d %b %Y') if farmer.created_at else '' }}</td>
+                                    <td>
+                                        <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                                            <a href="{{ url_for('admin.farmer_detail', user_id=farmer.id) }}" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
+                                            {% if not farmer.is_verified %}
+                                            <form method="post" action="{{ url_for('admin.verify_farmer_email', user_id=farmer.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-success" title="Verify Email" style="color: white;"><i class="fas fa-envelope-open-text"></i></button>
+                                            </form>
+                                            {% endif %}
+                                            <form method="post" action="{{ url_for('admin.toggle_farmer_status', user_id=farmer.id) }}" style="display: inline;" onsubmit="return confirm('{{ 'Suspend' if farmer.status == 'active' else 'Activate' }} this user?');">
+                                                <button type="submit" class="btn btn-sm {{ 'btn-warning' if farmer.status == 'active' else 'btn-success' }}" title="{{ 'Suspend' if farmer.status == 'active' else 'Activate' }}" style="color: white;"><i class="fas fa-{{ 'ban' if farmer.status == 'active' else 'check' }}"></i></button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

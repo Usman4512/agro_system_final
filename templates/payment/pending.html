@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Payment Status - Agro System{% endblock %}
+{% block body %}
+<div style="min-height:100vh;background:#f0f4f8;padding:40px 20px">
+<div style="max-width:600px;margin:0 auto">
+
+  <div style="text-align:center;margin-bottom:30px">
+    <div style="width:70px;height:70px;background:#e8f5e9;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="fas fa-clock" style="font-size:28px;color:#1a7a4a"></i>
+    </div>
+    <h2 style="color:#333;margin:0 0 8px">Payment Request Submitted</h2>
+    <p style="color:#666;font-size:14px">Your account will be activated within 24 hours after verification</p>
+  </div>
+
+  {% if requests %}
+  <div style="background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:24px;margin-bottom:20px">
+    <h3 style="color:#333;margin:0 0 16px;font-size:16px">Your Payment Requests</h3>
+
+    {% for req in requests %}
+    <div style="border:1px solid #f0f0f0;border-radius:10px;padding:16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:600;color:#333;text-transform:capitalize">{{ req.plan }} Plan</span>
+        <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+          background:{% if req.status=='approved' %}#e8f5e9{% elif req.status=='rejected' %}#fce4e4{% else %}#fff3cd{% endif %};
+          color:{% if req.status=='approved' %}#2e7d32{% elif req.status=='rejected' %}#c62828{% else %}#856404{% endif %}">
+          {% if req.status=='approved' %}✓ Approved
+          {% elif req.status=='rejected' %}✗ Rejected
+          {% else %}⏳ Pending{% endif %}
+        </span>
+      </div>
+      <div style="font-size:13px;color:#666">
+        Amount: <strong>Rs. {{ req.amount_pkr }}</strong> &nbsp;|&nbsp;
+        TxID: <strong>{{ req.transaction_id }}</strong>
+      </div>
+      {% if req.admin_note and req.status == 'rejected' %}
+      <div style="margin-top:8px;font-size:13px;color:#c62828;background:#fce4e4;padding:8px;border-radius:6px">
+        <i class="fas fa-info-circle"></i> {{ req.admin_note }}
+      </div>
+      {% endif %}
+      <div style="font-size:12px;color:#999;margin-top:6px">
+        Submitted: {{ req.created_at.strftime('%d %b %Y, %I:%M %p') if req.created_at else '' }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div style="background:#fff;border-radius:14px;border:1px solid #e0e0e0;padding:20px;text-align:center">
+    <p style="color:#666;font-size:14px;margin:0 0 14px">Questions? Contact us on WhatsApp</p>
+    <a href="{{ url_for('auth.login') }}"
+       style="display:inline-block;background:#1a7a4a;color:#fff;border-radius:8px;padding:10px 24px;text-decoration:none;font-weight:600;font-size:14px">
+      Back to Login
+    </a>
+  </div>
+
+</div>
+</div>
+{% endblock %}

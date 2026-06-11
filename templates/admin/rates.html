@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Rates - Admin Panel{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item active"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-tags" style="color: var(--primary);"></i> Manage Crop Rates</h4></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Add Rate Form -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-plus" style="color: var(--success);"></i> Add New Rate</h5></div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.add_rate') }}">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                            <div class="form-group">
+                                <label class="form-label">Crop Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" name="crop_name" placeholder="e.g. Wheat" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Variety</label>
+                                <input type="text" class="form-control" name="variety" placeholder="e.g. Desi">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Market Name <span class="required">*</span></label>
+                                <input type="text" class="form-control" name="market_name" placeholder="e.g. Lahore Grain Market" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">City <span class="required">*</span></label>
+                                <input type="text" class="form-control" name="city" placeholder="e.g. Lahore" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rate/kg (Rs.) <span class="required">*</span></label>
+                                <input type="number" class="form-control" name="rate_per_kg" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rate/40kg (Rs.)</label>
+                                <input type="number" class="form-control" name="rate_per_40kg" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Quality</label>
+                                <select class="form-control" name="quality_grade">
+                                    <option value="premium">Premium</option>
+                                    <option value="A" selected>A</option>
+                                    <option value="B">B</option>
+                                    <option value="C">C</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" class="form-control" name="date_recorded" value="{{ today }}">
+                            </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">Source</label>
+                                <input type="text" class="form-control" name="source" placeholder="Data source URL or reference">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="margin-top: 10px;"><i class="fas fa-save"></i> Add Rate</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Rates Table -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title">All Rates</h5></div>
+                <div class="card-body">
+                    <div class="table-container" style="max-height: 600px; overflow-y: auto;">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Crop</th><th>Variety</th><th>Market</th><th>City</th><th>Quality</th><th>Rs./kg</th><th>Rs./40kg</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in rates %}
+                                <tr>
+                                    <td><strong>{{ rate.crop_name }}</strong></td>
+                                    <td>{{ rate.variety or '-' }}</td>
+                                    <td>{{ rate.market_name }}</td>
+                                    <td>{{ rate.city }}</td>
+                                    <td><span class="badge badge-{{ 'success' if rate.quality_grade == 'premium' else 'info' if rate.quality_grade == 'A' else 'warning' if rate.quality_grade == 'B' else 'secondary' }}">{{ rate.quality_grade|upper }}</span></td>
+                                    <td class="pkr">{{ "{:.2f}".format(rate.rate_per_kg_pkr) }}</td>
+                                    <td class="pkr">{{ "{:.0f}".format(rate.rate_per_40kg_pkr) if rate.rate_per_40kg_pkr else '-' }}</td>
+                                    <td>{{ rate.date_recorded.strftime('%d %b %Y') if rate.date_recorded else '' }}</td>
+                                    <td><span class="badge badge-{{ 'success' if rate.is_active else 'secondary' }}">{{ 'Active' if rate.is_active else 'Inactive' }}</span></td>
+                                    <td>
+                                        {% if rate.is_active %}
+                                        <form method="post" action="{{ url_for('admin.delete_rate', rate_id=rate.id) }}" style="display: inline;" onsubmit="return confirm('Deactivate this rate?');">
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Deactivate"><i class="fas fa-trash"></i></button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

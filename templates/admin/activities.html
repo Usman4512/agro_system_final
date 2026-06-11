@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log - Admin Panel{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item active"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-history" style="color: var(--primary);"></i> Activity Log</h4></div>
+        </div>
+        
+        <div class="content-area">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-container" style="max-height: 70vh; overflow-y: auto;">
+                        <table class="table">
+                            <thead>
+                                <tr><th>ID</th><th>User</th><th>Type</th><th>Description</th><th>Table</th><th>IP Address</th><th>Time</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in activities %}
+                                <tr>
+                                    <td>#{{ activity.id }}</td>
+                                    <td><strong>{{ activity.full_name or 'System' }}</strong><br><small style="color: var(--gray);">@{{ activity.username or 'N/A' }}</small></td>
+                                    <td><span class="badge badge-info">{{ activity.activity_type }}</span></td>
+                                    <td>{{ activity.description }}</td>
+                                    <td>{{ activity.related_table or '-' }}</td>
+                                    <td><small>{{ activity.ip_address or '-' }}</small></td>
+                                    <td>{{ activity.created_at.strftime('%d %b %H:%M') if activity.created_at else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

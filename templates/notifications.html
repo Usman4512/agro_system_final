@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('dashboard.notifications') }}" class="nav-item active"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-bell" style="color: var(--info);"></i> Notifications</h4><p>All your notifications in one place</p></div>
+        </div>
+        
+        <div class="content-area">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title">All Notifications</h5></div>
+                <div class="card-body">
+                    {% if notifications %}
+                    {% for notif in notifications %}
+                    <div style="display: flex; align-items: start; gap: 15px; padding: 18px; border-radius: 12px; margin-bottom: 10px; background: {{ '#e8f5e9' if notif.notification_type == 'success' else '#fff3e0' if notif.notification_type == 'warning' else '#e3f2fd' if notif.notification_type == 'info' else '#ffcdd2' }};">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{ '#c8e6c9' if notif.notification_type == 'success' else '#ffe0b2' if notif.notification_type == 'warning' else '#bbdefb' if notif.notification_type == 'info' else '#ef9a9a' }}; color: {{ '#2e7d32' if notif.notification_type == 'success' else '#e65100' if notif.notification_type == 'warning' else '#1565c0' if notif.notification_type == 'info' else '#c62828' }};">
+                            <i class="fas fa-{{ 'check' if notif.notification_type == 'success' else 'exclamation' if notif.notification_type == 'warning' else 'info' if notif.notification_type == 'info' else 'times' }}"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h6 style="font-size: 15px; font-weight: 600; margin-bottom: 5px;">{{ notif.title }}</h6>
+                            <p style="font-size: 13px; color: #555; margin: 0; line-height: 1.5;">{{ notif.message }}</p>
+                            <small style="color: var(--gray); font-size: 11px; margin-top: 5px; display: block;">
+                                <i class="far fa-clock"></i> {{ notif.created_at.strftime('%d %b %Y at %I:%M %p') if notif.created_at else '' }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-bell-slash"></i></div>
+                        <h4>No notifications</h4>
+                        <p>You're all caught up!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

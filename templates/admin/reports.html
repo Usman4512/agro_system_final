@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Admin Panel{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.index') }}" class="sidebar-brand"><i class="fas fa-shield-alt"></i> Admin Panel</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span class="badge badge-warning" style="font-size: 10px;">ADMIN</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Administration</div>
+            <a href="{{ url_for('admin.index') }}" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{{ url_for('admin.farmers') }}" class="nav-item"><i class="fas fa-users"></i> Farmers</a>
+            <a href="{{ url_for('admin.rates') }}" class="nav-item"><i class="fas fa-tags"></i> Manage Rates</a>
+            <a href="{{ url_for('admin.activities') }}" class="nav-item"><i class="fas fa-history"></i> Activity Log</a>
+            <a href="{{ url_for('admin.reports') }}" class="nav-item active"><i class="fas fa-chart-pie"></i> Reports</a>
+            <div class="nav-section">Main App</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> User Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-chart-pie" style="color: var(--primary);"></i> System Reports</h4></div>
+        </div>
+        
+        <div class="content-area">
+            <div class="stats-grid">
+                <div class="stat-card green"><div class="stat-header"><span class="stat-title">Total Farmers</span><div class="stat-icon"><i class="fas fa-users"></i></div></div><div class="stat-value">{{ total_farmers }}</div></div>
+                <div class="stat-card orange"><div class="stat-header"><span class="stat-title">Total Expenses</span><div class="stat-icon"><i class="fas fa-wallet"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_expenses) }}</div></div>
+                <div class="stat-card blue"><div class="stat-header"><span class="stat-title">Total Revenue</span><div class="stat-icon"><i class="fas fa-coins"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_revenue) }}</div></div>
+                <div class="stat-card purple"><div class="stat-header"><span class="stat-title">Net Profit</span><div class="stat-icon"><i class="fas fa-chart-line"></i></div></div><div class="stat-value pkr">{{ "{:,.0f}".format(total_revenue - total_expenses) }}</div></div>
+            </div>
+            
+            {% if province_stats %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-map" style="color: var(--info);"></i> Crops by Province</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead><tr><th>Province</th><th>Crop Count</th><th>Total Acres</th></tr></thead>
+                            <tbody>
+                                {% for stat in province_stats %}
+                                <tr>
+                                    <td><strong>{{ stat.province or 'Unknown' }}</strong></td>
+                                    <td>{{ stat.crop_count }}</td>
+                                    <td>{{ "{:.1f}".format(stat.total_acres or 0) }} acres</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if top_crops %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-seedling" style="color: var(--success);"></i> Top Crops by Area</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead><tr><th>Crop</th><th>Total Acres</th><th>Farmers Growing</th></tr></thead>
+                            <tbody>
+                                {% for crop in top_crops %}
+                                <tr>
+                                    <td><strong>{{ crop.crop_name }}</strong></td>
+                                    <td>{{ "{:.1f}".format(crop.total_acres or 0) }} acres</td>
+                                    <td>{{ crop.farmer_count }} farmers</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

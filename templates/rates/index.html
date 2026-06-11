@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Market Rates - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item active"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-chart-line" style="color: var(--info);"></i> Market Rates (PKR)</h4><p>Latest crop prices across Pakistan markets</p></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Average Rates Summary -->
+            {% if avg_rates %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Average Rates by Crop (Last 7 Days)</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Crop</th>
+                                    <th>Min (Rs./kg)</th>
+                                    <th>Max (Rs./kg)</th>
+                                    <th>Average (Rs./kg)</th>
+                                    <th>Markets</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in avg_rates %}
+                                <tr>
+                                    <td><strong>{{ rate.crop_name }}</strong></td>
+                                    <td class="pkr">{{ "{:.2f}".format(rate.min_rate_kg) }}</td>
+                                    <td class="pkr">{{ "{:.2f}".format(rate.max_rate_kg) }}</td>
+                                    <td><strong class="pkr">{{ "{:.2f}".format(rate.avg_rate_kg) }}</strong></td>
+                                    <td>{{ rate.market_count }} markets</td>
+                                    <td><a href="{{ url_for('rates.crop_detail', crop_name=rate.crop_name) }}" class="btn btn-sm btn-info"><i class="fas fa-chart-line"></i> Details</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Filters -->
+            <form class="filter-bar" method="get">
+                <div class="filter-group">
+                    <label>Crop</label>
+                    <select class="form-control" name="crop">
+                        <option value="">All Crops</option>
+                        {% for c in crops %}<option value="{{ c }}" {{ 'selected' if filters.crop == c else '' }}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>City</label>
+                    <select class="form-control" name="city">
+                        <option value="">All Cities</option>
+                        {% for city in cities %}<option value="{{ city }}" {{ 'selected' if filters.city == city else '' }}>{{ city }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Market</label>
+                    <input type="text" class="form-control" name="market" placeholder="Search market..." value="{{ filters.market }}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm" style="height: fit-content;"><i class="fas fa-filter"></i> Filter</button>
+                <a href="{{ url_for('rates.index') }}" class="btn btn-secondary btn-sm" style="height: fit-content;"><i class="fas fa-undo"></i> Reset</a>
+            </form>
+            
+            <!-- Detailed Rates Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="fas fa-table" style="color: var(--primary);"></i> Detailed Rates</h5>
+                    <span style="font-size: 13px; color: var(--gray);">{{ rates|length }} records</span>
+                </div>
+                <div class="card-body">
+                    {% if rates %}
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Crop</th>
+                                    <th>Variety</th>
+                                    <th>Market</th>
+                                    <th>City</th>
+                                    <th>Quality</th>
+                                    <th>Rs./kg</th>
+                                    <th>Rs./40kg</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in rates %}
+                                <tr>
+                                    <td><strong>{{ rate.crop_name }}</strong></td>
+                                    <td>{{ rate.variety or '-' }}</td>
+                                    <td>{{ rate.market_name }}</td>
+                                    <td>{{ rate.city }}</td>
+                                    <td><span class="badge badge-{{ 'success' if rate.quality_grade == 'premium' else 'info' if rate.quality_grade == 'A' else 'warning' if rate.quality_grade == 'B' else 'secondary' }}">{{ rate.quality_grade|upper }}</span></td>
+                                    <td><strong class="pkr">{{ "{:.2f}".format(rate.rate_per_kg_pkr) }}</strong></td>
+                                    <td class="pkr">{{ "{:.0f}".format(rate.rate_per_40kg_pkr) if rate.rate_per_40kg_pkr else '-' }}</td>
+                                    <td>{{ rate.date_recorded.strftime('%d %b %Y') if rate.date_recorded else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-chart-line"></i></div>
+                        <h4>No rate data found</h4>
+                        <p>Try adjusting your filters</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

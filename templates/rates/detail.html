@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ crop_name }} Rates - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item active"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h4><i class="fas fa-chart-bar" style="color: var(--primary);"></i> {{ crop_name }} - Market Comparison</h4>
+                <p>Compare prices across different markets</p>
+            </div>
+            <div class="topbar-right">
+                <a href="{{ url_for('rates.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Back to Rates</a>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <!-- Price Comparison Chart -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-chart-bar" style="color: var(--primary);"></i> Price by Market (Rs./kg)</h5></div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Comparison Table -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-table" style="color: var(--info);"></i> Latest Market Prices</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Market</th><th>City</th><th>Quality</th><th>Rs./kg</th><th>Rs./40kg</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in market_comparison %}
+                                <tr>
+                                    <td><strong>{{ rate.market_name }}</strong></td>
+                                    <td>{{ rate.city }}</td>
+                                    <td><span class="badge badge-{{ 'success' if rate.quality_grade == 'premium' else 'info' if rate.quality_grade == 'A' else 'warning' if rate.quality_grade == 'B' else 'secondary' }}">{{ rate.quality_grade|upper }}</span></td>
+                                    <td><strong class="pkr">{{ "{:.2f}".format(rate.rate_per_kg_pkr) }}</strong></td>
+                                    <td class="pkr">{{ "{:.0f}".format(rate.rate_per_40kg_pkr) if rate.rate_per_40kg_pkr else '-' }}</td>
+                                    <td>{{ rate.date_recorded.strftime('%d %b %Y') if rate.date_recorded else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Historical Data -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title"><i class="fas fa-history" style="color: var(--warning);"></i> Price History</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Crop</th><th>Variety</th><th>Market</th><th>City</th><th>Quality</th><th>Rs./kg</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for rate in rates %}
+                                <tr>
+                                    <td><strong>{{ rate.crop_name }}</strong></td>
+                                    <td>{{ rate.variety or '-' }}</td>
+                                    <td>{{ rate.market_name }}</td>
+                                    <td>{{ rate.city }}</td>
+                                    <td><span class="badge badge-{{ 'success' if rate.quality_grade == 'premium' else 'info' if rate.quality_grade == 'A' else 'warning' if rate.quality_grade == 'B' else 'secondary' }}">{{ rate.quality_grade|upper }}</span></td>
+                                    <td><strong class="pkr">{{ "{:.2f}".format(rate.rate_per_kg_pkr) }}</strong></td>
+                                    <td>{{ rate.date_recorded.strftime('%d %b %Y') if rate.date_recorded else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById('marketChart').getContext('2d');
+const chartData = {{ market_comparison|tojson }};
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: chartData.map(d => d.city + ' - ' + d.market_name.substring(0, 15)),
+        datasets: [{
+            label: 'Rs. per kg',
+            data: chartData.map(d => d.rate_per_kg_pkr),
+            backgroundColor: 'rgba(74, 124, 35, 0.7)',
+            borderColor: 'rgba(74, 124, 35, 1)',
+            borderWidth: 1,
+            borderRadius: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: {
+                    callback: function(value) {
+                        return 'Rs. ' + value.toFixed(0);
+                    }
+                }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

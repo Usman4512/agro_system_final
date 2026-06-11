@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ crop.crop_name }} - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item active"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <h4><i class="fas fa-seedling" style="color: var(--primary);"></i> {{ crop.crop_name }} {% if crop.variety %}- {{ crop.variety }}{% endif %}</h4>
+                <p><span class="badge badge-{{ 'success' if crop.status == 'harvested' else 'info' if crop.status in ['growing', 'planted'] else 'warning' }}">{{ crop.status|replace('_', ' ')|title }}</span></p>
+            </div>
+            <div class="topbar-right">
+                <a href="{{ url_for('crops.edit', crop_id=crop.id) }}" class="btn btn-warning btn-sm" style="color: white;"><i class="fas fa-edit"></i> Edit</a>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div class="grid-2">
+                <!-- Crop Details -->
+                <div class="card">
+                    <div class="card-header"><h5 class="card-title">Crop Details</h5></div>
+                    <div class="card-body">
+                        <table class="table">
+                            <tr><td style="font-weight: 600; width: 40%;">Crop Name</td><td>{{ crop.crop_name }}</td></tr>
+                            <tr><td style="font-weight: 600;">Variety</td><td>{{ crop.variety or 'N/A' }}</td></tr>
+                            <tr><td style="font-weight: 600;">Type</td><td>{{ crop.crop_type|replace('_', ' ')|title }}</td></tr>
+                            <tr><td style="font-weight: 600;">Season</td><td>{{ crop.season|title }}</td></tr>
+                            <tr><td style="font-weight: 600;">Area</td><td>{{ crop.area_acres }} acres</td></tr>
+                            <tr><td style="font-weight: 600;">Planting Date</td><td>{{ crop.planting_date.strftime('%d %B, %Y') if crop.planting_date else 'Not set' }}</td></tr>
+                            <tr><td style="font-weight: 600;">Expected Harvest</td><td>{{ crop.expected_harvest_date.strftime('%d %B, %Y') if crop.expected_harvest_date else 'Not set' }}</td></tr>
+                            <tr><td style="font-weight: 600;">Actual Harvest</td><td>{{ crop.actual_harvest_date.strftime('%d %B, %Y') if crop.actual_harvest_date else 'Pending' }}</td></tr>
+                            <tr><td style="font-weight: 600;">Expected Yield</td><td>{{ "{:,.1f}".format(crop.yield_expected_kg) if crop.yield_expected_kg else 'N/A' }} kg</td></tr>
+                            <tr><td style="font-weight: 600;">Actual Yield</td><td>{{ "{:,.1f}".format(crop.yield_actual_kg) if crop.yield_actual_kg else 'Pending' }} kg</td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Financial Summary -->
+                <div class="card">
+                    <div class="card-header"><h5 class="card-title">Financial Summary</h5></div>
+                    <div class="card-body">
+                        <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="stat-card orange">
+                                <span class="stat-title">Expenses</span>
+                                <div class="stat-value pkr">{{ "{:,.0f}".format(crop.expenses_pkr or 0) }}</div>
+                            </div>
+                            <div class="stat-card green">
+                                <span class="stat-title">Revenue</span>
+                                <div class="stat-value pkr">{{ "{:,.0f}".format(crop.revenue_pkr or 0) }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if crop.status == 'ready_to_harvest' %}
+                        <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
+                        <h6 style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: var(--success);"></i> Mark as Harvested</h6>
+                        <form method="post" action="{{ url_for('crops.harvest', crop_id=crop.id) }}">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Actual Yield (kg)</label>
+                                    <input type="number" class="form-control" name="actual_yield_kg" step="0.01" min="0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Revenue (Rs.)</label>
+                                    <input type="number" class="form-control" name="revenue_pkr" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-block"><i class="fas fa-check"></i> Confirm Harvest</button>
+                        </form>
+                        {% endif %}
+                        
+                        {% if crop.notes %}
+                        <hr style="border: none; border-top: 1px solid #e9ecef; margin: 20px 0;">
+                        <h6 style="margin-bottom: 10px;"><i class="fas fa-sticky-note" style="color: var(--warning);"></i> Notes</h6>
+                        <p style="font-size: 14px; color: #555; line-height: 1.6;">{{ crop.notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Expenses -->
+            {% if related_expenses %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title">Related Expenses</h5></div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table class="table">
+                            <thead><tr><th>Category</th><th>Description</th><th>Amount (Rs.)</th><th>Date</th></tr></thead>
+                            <tbody>
+                                {% for exp in related_expenses %}
+                                <tr>
+                                    <td><span class="badge badge-primary">{{ exp.expense_category|title }}</span></td>
+                                    <td>{{ exp.description }}</td>
+                                    <td class="pkr">{{ "{:,.0f}".format(exp.amount_pkr) }}</td>
+                                    <td>{{ exp.expense_date.strftime('%d %b %Y') if exp.expense_date else '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

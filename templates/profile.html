@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Agro Management System{% endblock %}
+
+{% block body %}
+<div class="dashboard-wrapper">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('dashboard.index') }}" class="sidebar-brand"><i class="fas fa-leaf"></i> AgroSystem</a>
+        </div>
+        <div class="sidebar-user">
+            <div class="sidebar-user-img">{{ session.full_name[0] if session.full_name else 'U' }}</div>
+            <div class="sidebar-user-info"><h5>{{ session.full_name }}</h5><span><i class="fas fa-circle" style="color: #4caf50; font-size: 8px;"></i> Online</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Main</div>
+            <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i class="fas fa-home"></i> Dashboard</a>
+            <div class="nav-section">Management</div>
+            <a href="{{ url_for('crops.index') }}" class="nav-item"><i class="fas fa-seedling"></i> My Crops</a>
+            <a href="{{ url_for('crops.inventory') }}" class="nav-item"><i class="fas fa-warehouse"></i> Inventory</a>
+            <a href="{{ url_for('crops.expenses') }}" class="nav-item"><i class="fas fa-money-bill-wave"></i> Expenses</a>
+            <div class="nav-section">Market</div>
+            <a href="{{ url_for('rates.index') }}" class="nav-item"><i class="fas fa-chart-line"></i> Market Rates</a>
+            <div class="nav-section">Account</div>
+            <a href="{{ url_for('dashboard.profile') }}" class="nav-item active"><i class="fas fa-user"></i> Profile</a>
+            <a href="{{ url_for('auth.logout') }}" class="nav-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </nav>
+    </aside>
+    
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-left"><h4><i class="fas fa-user" style="color: var(--primary);"></i> My Profile</h4><p>Manage your account settings</p></div>
+        </div>
+        
+        <div class="content-area">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}"><i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' }}"></i> {{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <div class="profile-avatar">{{ user.full_name[0] }}</div>
+                <h3>{{ user.full_name }}</h3>
+                <p><i class="fas fa-map-marker-alt" style="color: var(--danger);"></i> {{ user.city }}, {{ user.province }}</p>
+                <span class="badge badge-success" style="margin-top: 10px;"><i class="fas fa-check-circle"></i> Verified Account</span>
+            </div>
+            
+            <div class="grid-2">
+                <!-- Profile Info -->
+                <div class="card">
+                    <div class="card-header"><h5 class="card-title"><i class="fas fa-user-edit" style="color: var(--primary);"></i> Edit Profile</h5></div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('dashboard.profile') }}">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" name="full_name" value="{{ user.full_name }}" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" name="phone" value="{{ user.phone or '' }}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" name="address" rows="2">{{ user.address or '' }}</textarea>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">City</label>
+                                    <input type="text" class="form-control" name="city" value="{{ user.city or '' }}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Province</label>
+                                    <select class="form-control" name="province">
+                                        <option value="">Select</option>
+                                        <option value="Punjab" {{ 'selected' if user.province == 'Punjab' else '' }}>Punjab</option>
+                                        <option value="Sindh" {{ 'selected' if user.province == 'Sindh' else '' }}>Sindh</option>
+                                        <option value="KPK" {{ 'selected' if user.province == 'KPK' else '' }}>KPK</option>
+                                        <option value="Balochistan" {{ 'selected' if user.province == 'Balochistan' else '' }}>Balochistan</option>
+                                        <option value="Gilgit-Baltistan" {{ 'selected' if user.province == 'Gilgit-Baltistan' else '' }}>Gilgit-Baltistan</option>
+                                        <option value="AJK" {{ 'selected' if user.province == 'AJK' else '' }}>Azad Kashmir</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="form-group">
+                                    <label class="form-label">Farm Size (Acres)</label>
+                                    <input type="number" class="form-control" name="farm_size" value="{{ user.farm_size or '' }}" step="0.01" min="0">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Farm Type</label>
+                                    <select class="form-control" name="farm_type">
+                                        <option value="">Select</option>
+                                        <option value="crop_farm" {{ 'selected' if user.farm_type == 'crop_farm' else '' }}>Crop Farm</option>
+                                        <option value="livestock" {{ 'selected' if user.farm_type == 'livestock' else '' }}>Livestock</option>
+                                        <option value="mixed" {{ 'selected' if user.farm_type == 'mixed' else '' }}>Mixed Farming</option>
+                                        <option value="organic" {{ 'selected' if user.farm_type == 'organic' else '' }}>Organic Farm</option>
+                                        <option value="dairy" {{ 'selected' if user.farm_type == 'dairy' else '' }}>Dairy Farm</option>
+                                        <option value="poultry" {{ 'selected' if user.farm_type == 'poultry' else '' }}>Poultry Farm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Profile</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Account Info & Password -->
+                <div>
+                    <div class="card">
+                        <div class="card-header"><h5 class="card-title"><i class="fas fa-info-circle" style="color: var(--info);"></i> Account Info</h5></div>
+                        <div class="card-body">
+                            <table class="table">
+                                <tr><td style="font-weight: 600;">Username</td><td>{{ user.username }}</td></tr>
+                                <tr><td style="font-weight: 600;">Email</td><td>{{ user.email }}</td></tr>
+                                <tr><td style="font-weight: 600;">Role</td><td><span class="badge badge-primary">{{ user.role|title }}</span></td></tr>
+                                <tr><td style="font-weight: 600;">Status</td><td><span class="badge badge-success">{{ user.status|title }}</span></td></tr>
+                                <tr><td style="font-weight: 600;">Joined</td><td>{{ user.created_at.strftime('%d %B %Y') if user.created_at else '' }}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header"><h5 class="card-title"><i class="fas fa-lock" style="color: var(--warning);"></i> Change Password</h5></div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('dashboard.change_password') }}">
+                                <div class="form-group">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" name="current_password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" name="new_password" required minlength="6">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirm Password</label>
+                                    <input type="password" class="form-control" name="confirm_password" required minlength="6">
+                                </div>
+                                <button type="submit" class="btn btn-warning" style="color: white;"><i class="fas fa-key"></i> Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
