@@ -1,20 +1,19 @@
 import os
 import MySQLdb
 from MySQLdb.cursors import DictCursor
-from flask import current_app, g
+from flask import g, current_app
 import click
 from flask.cli import with_appcontext
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timedelta
 
 # =========================
-# DATABASE CONNECTION CLASS
+# DATABASE CORE
 # =========================
 
 class Database:
     def __init__(self, app=None):
-        self.app = app
-        if app is not None:
+        if app:
             self.init_app(app)
 
     def init_app(self, app):
@@ -23,19 +22,19 @@ class Database:
     def get_connection(self):
         if 'db' not in g:
             g.db = MySQLdb.connect(
-                host=os.environ.get("MYSQL_HOST"),
-                user=os.environ.get("MYSQL_USER"),
-                password=os.environ.get("MYSQL_PASSWORD"),
-                database=os.environ.get("MYSQL_DB"),
-                port=int(os.environ.get("MYSQL_PORT", 3306)),
+                host=os.getenv("MYSQL_HOST"),
+                user=os.getenv("MYSQL_USER"),
+                password=os.getenv("MYSQL_PASSWORD"),
+                database=os.getenv("MYSQL_DB"),
+                port=int(os.getenv("MYSQL_PORT", 3306)),
                 cursorclass=DictCursor,
-                charset='utf8mb4'
+                charset="utf8mb4"
             )
         return g.db
 
     def close_db(self, e=None):
         db = g.pop('db', None)
-        if db is not None:
+        if db:
             db.close()
 
 
@@ -53,26 +52,27 @@ def get_db():
     return db.get_connection()
 
 # =========================
-# DATABASE INITIALIZATION
+# INIT DATABASE TABLES
 # =========================
 
 def init_db():
-    connection = db.get_connection()
-    cursor = connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-    cursor.execute("""
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             full_name VARCHAR(100),
-            email VARCHAR(100),
+            username VARCHAR(50) UNIQUE,
+            email VARCHAR(100) UNIQUE,
             password_hash VARCHAR(255),
             role VARCHAR(20) DEFAULT 'farmer',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
-    connection.commit()
-    cursor.close()
+    conn.commit()
+    cur.close()
 
 # =========================
 # CLI COMMAND
@@ -82,24 +82,24 @@ def init_db():
 @with_appcontext
 def init_db_command():
     init_db()
-    click.echo('Database initialized successfully!')
+    click.echo("Database initialized successfully!")
 
 # =========================
-# AUTO CHECK DB
+# AUTO INIT CHECK
 # =========================
 
 def ensure_db_initialized():
-    db_conn = get_db()
-    cursor = db_conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        cursor.execute("SHOW TABLES LIKE 'users'")
-        if cursor.fetchone() is None:
+        cur.execute("SHOW TABLES LIKE 'users'")
+        if not cur.fetchone():
             init_db()
     finally:
-        cursor.close()
+        cur.close()
 
 # =========================
-# HELPERS
+# REQUIRED USER FUNCTIONS
 # =========================
 
 def get_user_by_email(email):
@@ -110,6 +110,16 @@ def get_user_by_email(email):
     cur.close()
     return user
 
+
+def get_user_by_username(username):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+    user = cur.fetchone()
+    cur.close()
+    return user
+
+
 def get_user_by_id(user_id):
     conn = get_db()
     cur = conn.cursor()
@@ -118,15 +128,20 @@ def get_user_by_id(user_id):
     cur.close()
     return user
 
-def create_user(full_name, email, password):
+# =========================
+# OPTIONAL HELPERS
+# =========================
+
+def create_user(full_name, username, email, password):
     conn = get_db()
     cur = conn.cursor()
+
     password_hash = generate_password_hash(password)
 
     cur.execute("""
-        INSERT INTO users (full_name, email, password_hash)
-        VALUES (%s, %s, %s)
-    """, (full_name, email, password_hash))
+        INSERT INTO users (full_name, username, email, password_hash)
+        VALUES (%s, %s, %s, %s)
+    """, (full_name, username, email, password_hash))
 
     conn.commit()
     cur.close()
