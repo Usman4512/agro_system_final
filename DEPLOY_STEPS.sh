@@ -64,8 +64,8 @@ gcloud run deploy agro-system \
   --platform managed \
   --allow-unauthenticated \
   --add-cloudsql-instances agro-system-app:us-central1:agro-db \
-  --set-env-vars SECRET_KEY="agro4512meri" \
-  --set-env-vars MYSQL_HOST="/cloudsql/agro-system-app:us-central1:agro-db" \
+  SECRET_KEY = agro4512meri
+  DATABASE_URL = mysql://user:password@host:port/dbname
   --set-env-vars MYSQL_USER="root" \
   --set-env-vars MYSQL_PASSWORD="Usman$5000" \
   --set-env-vars MYSQL_DB="agrosystem" \

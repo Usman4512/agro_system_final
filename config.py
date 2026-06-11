@@ -1,8 +1,9 @@
 import os
 from datetime import timedelta
 
+SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'agro4512meri')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'agro4512meeri')
 
     MYSQL_HOST        = os.environ.get('MYSQL_HOST', '127.0.0.1')
     MYSQL_USER        = os.environ.get('MYSQL_USER', 'root')
